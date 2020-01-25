@@ -23,7 +23,7 @@ namespace CCTV_Accord.Helpers
         static OnnxModelScorer modelScorer;
         // Initialize MLContext
         MLContext mlContext = new MLContext();
-        public async Task<(IList<YoloBoundingBox> objects, string FileName)> ProcessFrame(System.Drawing.Image image, string CamName)
+        public async Task<(IList<YoloBoundingBox> objects, string FileName)> ProcessFrame(string ImageFileInput, string CamName)
         {
             var outputFile = "";
             var res = await Task.Run<IList<YoloBoundingBox>>(() =>
@@ -32,10 +32,10 @@ namespace CCTV_Accord.Helpers
                 {
                     // Load Data
                     //IEnumerable<ImageNetData> images = ImageNetData.ReadFromFile(imagesFolder);
-                    var tempFile = Path.GetTempFileName() + $"_{CamName}.jpg";
-                    image.Save(tempFile);
+                    //var tempFile = Path.GetTempFileName() + $"_{CamName}.jpg";
+                    //image.Save(tempFile);
 
-                    IEnumerable<ImageNetData> images = new List<ImageNetData> { new ImageNetData() { ImagePath = tempFile, Label = Path.GetFileName(tempFile) } };
+                    IEnumerable<ImageNetData> images = new List<ImageNetData> { new ImageNetData() { ImagePath = ImageFileInput, Label = Path.GetFileName(ImageFileInput) } };
                     IDataView imageDataView = mlContext.Data.LoadFromEnumerable(images);
 
                     // Create instance of model scorer

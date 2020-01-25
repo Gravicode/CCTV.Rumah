@@ -18,12 +18,12 @@ using System.Windows.Shapes;
 using System.Diagnostics;
 using System.Windows.Threading;
 using System.Threading;
-using OpenCvSharp;
-using OpenCvSharp.Extensions;
+//using OpenCvSharp;
+//using OpenCvSharp.Extensions;
 using System.Net.Http;
 using Newtonsoft.Json;
 using System.Configuration;
-using Accord.Video.FFMPEG;
+//using Accord.Video.FFMPEG;
 using System.Drawing;
 using System.IO;
 using CCTV_Accord.Helpers;
@@ -51,7 +51,7 @@ namespace CCTV_Accord
         //static CascadeClassifier _localObjectDetector = new CascadeClassifier("Data/cascadG.xml");
 
         //head and shoulder
-        private static CascadeClassifier _localObjectDetector = new CascadeClassifier("Data/haarcascade_upperbody.xml");
+        //private static CascadeClassifier _localObjectDetector = new CascadeClassifier("Data/haarcascade_upperbody.xml");
 
         //static AzureBlobHelper BlobEngine = new AzureBlobHelper();
 
@@ -98,6 +98,7 @@ namespace CCTV_Accord
             Task task1 = new Task(async()=> await DoPlaying());
             task1.Start();
         }
+
         /*
         private void SaveFrameButton_Click(object sender, RoutedEventArgs e)
         {
@@ -132,15 +133,41 @@ namespace CCTV_Accord
         #region Frame Processing
         private async Task DoPlaying()
         {
-           
-            var reader = new List<VideoFileReader>();
+            var libDirectory = new DirectoryInfo(System.IO.Path.Combine(ConfigurationManager.AppSettings["VlcDir"], IntPtr.Size == 4 ? "x86" : "x64"));
+
+            var options = new string[]
+            {
+                // VLC options can be given here. Please refer to the VLC command line documentation.
+            };
+            
+            var reader = new List<Vlc.DotNet.Core.VlcMediaPlayer>();
 
             for (int i = 0; i < APPCONTANTS.CameraCount; i++)
             {
+                var mediaPlayer = new Vlc.DotNet.Core.VlcMediaPlayer(libDirectory);
+                mediaPlayer.SetMedia(new Uri(ConfigurationManager.AppSettings["cam" + (i + 1)]));
+                /*
+                mediaPlayer.PositionChanged += (sender, e) =>
+                {
+                    Console.Write("\r" + Math.Floor(e.NewPosition * 100) + "%");
+                };
+                */
+                mediaPlayer.EncounteredError += (sender, e) =>
+                {
+                    Console.Error.Write("An error occurred");
+                    //playFinished = true;
+                };
+                /*
+                mediaPlayer.EndReached += (sender, e) => {
+                    playFinished = true;
+                };*/
+                mediaPlayer.Play();
+                reader.Add(mediaPlayer);
+                /*
                 var cam = new VideoFileReader();
                 reader.Add(cam);
                 cam.Open(ConfigurationManager.AppSettings["cam" + (i + 1)]);
-                
+                */
             }
             while (true)
             {
@@ -153,13 +180,17 @@ namespace CCTV_Accord
                 {
                     try
                     {
+                        /*
                         if (!reader[i].IsOpen)
                         {
                             reader[i].Open(ConfigurationManager.AppSettings["cam" + (i + 1)]);
-                        }
-                        Bitmap frame = reader[i].ReadVideoFrame((int)reader[i].FrameCount);
+                        }*/
 
-                        await ProcessFrame(frame, $"cam{i + 1}");
+                        //Bitmap frame = reader[i].ReadVideoFrame((int)reader[i].FrameCount);
+                        var tempFile = System.IO.Path.GetTempFileName() + $"_cam{i}.jpg";
+                        reader[i].TakeSnapshot(new FileInfo(tempFile));
+                        if(File.Exists(tempFile))
+                            await ProcessFrame(tempFile, $"cam{i + 1}");
 
                     }
                     catch
@@ -174,7 +205,9 @@ namespace CCTV_Accord
             }
             for (int i = 0; i < APPCONTANTS.CameraCount; i++)
             {
-                reader[i].Close();
+                reader[i].Stop();
+                reader[i].Dispose();
+                //.Close();
             }
             //Debug.WriteLine("frame captured : " + e.DateStamp);
             //await ProcessFrame(e.ToImage(), FrameId[(sender as FrameCapture).ID]);
@@ -257,7 +290,7 @@ namespace CCTV_Accord
             return image.ToBitmap();
         }
         */
-
+        /*
         public static System.Drawing.Bitmap FindPeople(Bitmap bmp, out OpenCvSharp.Rect[] Rect)
         {
             Mat mat = bmp.ToMat();
@@ -274,11 +307,13 @@ namespace CCTV_Accord
                 }
             }
             return bmp;
-        }
-        async Task ProcessFrame(System.Drawing.Image image, string CamName)
+        }*/
+        async Task ProcessFrame(string FileImage, string CamName)
         {
+            //System.Drawing.Image image,
+            //var image = Bitmap.FromFile(FileImage);
             //string BlobName = CamName + DateTime.Now.ToString("_yyyy_MM_dd_HH_mm_ss") + ".jpg";
-            var res = await ApiContainer.GetApi<ObjectDetector>().ProcessFrame(image,CamName);
+            var res = await ApiContainer.GetApi<ObjectDetector>().ProcessFrame(FileImage,CamName);
             if (res.objects == null) return;
             Bitmap bmp = new Bitmap(Bitmap.FromFile(res.FileName)); //new Bitmap(image, new System.Drawing.Size(600, 337));
 
