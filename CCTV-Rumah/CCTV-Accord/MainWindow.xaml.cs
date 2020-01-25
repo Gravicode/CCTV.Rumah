@@ -140,6 +140,7 @@ namespace CCTV_Accord
                 var cam = new VideoFileReader();
                 reader.Add(cam);
                 cam.Open(ConfigurationManager.AppSettings["cam" + (i + 1)]);
+                
             }
             while (true)
             {
@@ -152,10 +153,14 @@ namespace CCTV_Accord
                 {
                     try
                     {
+                        if (!reader[i].IsOpen)
+                        {
+                            reader[i].Open(ConfigurationManager.AppSettings["cam" + (i + 1)]);
+                        }
                         Bitmap frame = reader[i].ReadVideoFrame((int)reader[i].FrameCount);
-                        
-                            await ProcessFrame(frame, $"cam{i + 1}");
-                       
+
+                        await ProcessFrame(frame, $"cam{i + 1}");
+
                     }
                     catch
                     {
