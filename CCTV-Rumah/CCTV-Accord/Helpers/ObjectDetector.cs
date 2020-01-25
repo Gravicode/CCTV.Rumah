@@ -148,9 +148,11 @@ namespace CCTV_Accord.Helpers
                     break;
                 }
             }
-            var OutputName = PeopleExist && MainWindow.IsGuardMode? System.IO.Path.Combine(ObjectDetector.outputFolder, $"{DateTime.Now.ToString("yyyyMMdd_HHmmss")}_{CamName}.jpg"):Path.GetTempFileName()+"jpg";
+            var OutputName = PeopleExist && MainWindow.IsGuardMode? System.IO.Path.Combine(ObjectDetector.outputFolder, $"{DateTime.Now.ToString("yyyyMMdd_HHmmss")}_{CamName}.jpg"):Path.GetTempFileName()+".jpg";
             
             image.Save(OutputName);
+            image.Dispose();
+            File.Delete(imageFileName);
             return OutputName;
         }
 

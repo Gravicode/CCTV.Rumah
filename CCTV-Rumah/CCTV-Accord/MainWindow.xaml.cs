@@ -42,6 +42,8 @@ namespace CCTV_Accord
         static bool IsPlaying { set; get; } = false;
         static EngineContainer ApiContainer = new EngineContainer();
         static HttpClient client = new HttpClient();
+        static Dictionary<string, string> OldImages = new Dictionary<string, string>();
+        static List<string> JunkFiles = new List<string>();
         //static CascadeClassifier _localObjectDetector = new CascadeClassifier("Data/haarcascade_frontalface_alt2.xml");
 
         //head
@@ -87,6 +89,17 @@ namespace CCTV_Accord
             APPCONTANTS.CaptureTimeInterval = int.Parse(ConfigurationManager.AppSettings["CaptureTimeInterval"]);
             //_localObjectDetector.Load("Data/haarcascade_frontalface_alt2.xml");
             //_localObjectDetector.Load("Data/haarcascade_upperbody.xml");
+            this.Closed +=(e,w)=>{
+                try
+                {
+                    foreach (var item in JunkFiles)
+                    {
+                        if (File.Exists(item))
+                            File.Delete(item);
+                    }
+                }
+                catch { }
+            };
 
         }
         private async void ConnectBtn_Click(object sender, RoutedEventArgs e)
@@ -228,6 +241,21 @@ namespace CCTV_Accord
             bitmap.UnlockBits(bitmapData);
             return bitmapSource;
         }*/
+        BitmapImage BitmapToImageSource(Bitmap bitmap)
+        {
+            using (MemoryStream memory = new MemoryStream())
+            {
+                bitmap.Save(memory, System.Drawing.Imaging.ImageFormat.Bmp);
+                memory.Position = 0;
+                BitmapImage bitmapimage = new BitmapImage();
+                bitmapimage.BeginInit();
+                bitmapimage.StreamSource = memory;
+                bitmapimage.CacheOption = BitmapCacheOption.OnLoad;
+                bitmapimage.EndInit();
+
+                return bitmapimage;
+            }
+        }
         public static BitmapSource Convert(Bitmap source)
         {
             return System.Windows.Interop.Imaging.CreateBitmapSourceFromHBitmap(
@@ -315,8 +343,8 @@ namespace CCTV_Accord
             //string BlobName = CamName + DateTime.Now.ToString("_yyyy_MM_dd_HH_mm_ss") + ".jpg";
             var res = await ApiContainer.GetApi<ObjectDetector>().ProcessFrame(FileImage,CamName);
             if (res.objects == null) return;
-            Bitmap bmp = new Bitmap(Bitmap.FromFile(res.FileName)); //new Bitmap(image, new System.Drawing.Size(600, 337));
-
+            //Bitmap bmp = new Bitmap(Bitmap.FromFile(res.FileName)); //new Bitmap(image, new System.Drawing.Size(600, 337));
+            
             //emgu cv
             //List<System.Drawing.Rectangle> rects;
             //Image<Bgr, Byte> img = new Image<Bgr, byte>(bmp);
@@ -325,25 +353,33 @@ namespace CCTV_Accord
             //opencv3
             //OpenCvSharp.Rect[] rects=null;
             //bmp = FindPeople(bmp, out rects);
-           
+
             Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new ThreadStart(delegate
             {
+                
+                var img = new BitmapImage(new Uri(res.FileName));
                 switch (CamName)
                 {
                     case "cam1":
-                        Cam1.Source = Convert(bmp);
+                        Cam1.Source = img;// BitmapToImageSource(bmp);
                         break;
                     case "cam2":
-                        Cam2.Source = Convert(bmp);
+                        Cam2.Source = img;//BitmapToImageSource(bmp);
                         break;
                     case "cam3":
-                        Cam3.Source = Convert(bmp);
+                        Cam3.Source = img;//BitmapToImageSource(bmp);
                         break;
                     case "cam4":
-                        Cam4.Source = Convert(bmp);
+                        Cam4.Source = img;//BitmapToImageSource(bmp);
                         break;
                 }
-
+                
+                if (OldImages.ContainsKey(CamName))
+                {
+                    JunkFiles.Add(OldImages[CamName]);
+                    //File.Delete(OldImages[CamName]);
+                }
+                OldImages[CamName] = res.FileName;
             }));
             //call computer vision
             if (res.objects != null)
