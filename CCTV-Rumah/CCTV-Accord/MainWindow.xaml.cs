@@ -342,7 +342,6 @@ namespace CCTV_Accord
             //var image = Bitmap.FromFile(FileImage);
             //string BlobName = CamName + DateTime.Now.ToString("_yyyy_MM_dd_HH_mm_ss") + ".jpg";
             var res = await ApiContainer.GetApi<ObjectDetector>().ProcessFrame(FileImage,CamName);
-            if (res.objects == null) return;
             //Bitmap bmp = new Bitmap(Bitmap.FromFile(res.FileName)); //new Bitmap(image, new System.Drawing.Size(600, 337));            
             //emgu cv
             //List<System.Drawing.Rectangle> rects;
@@ -393,41 +392,47 @@ namespace CCTV_Accord
                         //}
                         result += $"{item.Label} = {item.Confidence.ToString("n2")},";
                     }
-
                     Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new ThreadStart(delegate
-            {
-                var status = $"{CamName} - {DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")}: " + result;
-                TxtDetect.Document.Blocks.Add(new Paragraph(new Run(status)));
+                    {
 
-                var img = new BitmapImage(new Uri(res.FileName));
-                switch (CamName)
-                {
-                    case "cam1":
-                        Cam1.Source = img;// BitmapToImageSource(bmp);
-                        break;
-                    case "cam2":
-                        Cam2.Source = img;//BitmapToImageSource(bmp);
-                        break;
-                    case "cam3":
-                        Cam3.Source = img;//BitmapToImageSource(bmp);
-                        break;
-                    case "cam4":
-                        Cam4.Source = img;//BitmapToImageSource(bmp);
-                        break;
-                }
-                
-                if (OldImages.ContainsKey(CamName))
-                {
-                    if(!isPeopleExist)
-                        JunkFiles.Add(OldImages[CamName]);
-                    //File.Delete(OldImages[CamName]);
-                }
-                OldImages[CamName] = res.FileName;
-            }));
+                        var status = $"{CamName} - {DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")}: " + result;
+                        TxtDetect.Document.Blocks.Add(new Paragraph(new Run(status)));
+                    }));
 
                     //File.Delete("Photos/"+BlobName);
                 }
 
+            }
+            if (!string.IsNullOrEmpty(res.FileName))
+            {
+                Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new ThreadStart(delegate
+                {
+
+                    var img = new BitmapImage(new Uri(res.FileName));
+                    switch (CamName)
+                    {
+                        case "cam1":
+                            Cam1.Source = img;// BitmapToImageSource(bmp);
+                        break;
+                        case "cam2":
+                            Cam2.Source = img;//BitmapToImageSource(bmp);
+                        break;
+                        case "cam3":
+                            Cam3.Source = img;//BitmapToImageSource(bmp);
+                        break;
+                        case "cam4":
+                            Cam4.Source = img;//BitmapToImageSource(bmp);
+                        break;
+                    }
+
+                    if (OldImages.ContainsKey(CamName))
+                    {
+                        if (!isPeopleExist)
+                            JunkFiles.Add(OldImages[CamName]);
+                    //File.Delete(OldImages[CamName]);
+                }
+                    OldImages[CamName] = res.FileName;
+                }));
             }
         }
         #endregion
