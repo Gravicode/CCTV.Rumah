@@ -343,8 +343,7 @@ namespace CCTV_Accord
             //string BlobName = CamName + DateTime.Now.ToString("_yyyy_MM_dd_HH_mm_ss") + ".jpg";
             var res = await ApiContainer.GetApi<ObjectDetector>().ProcessFrame(FileImage,CamName);
             if (res.objects == null) return;
-            //Bitmap bmp = new Bitmap(Bitmap.FromFile(res.FileName)); //new Bitmap(image, new System.Drawing.Size(600, 337));
-            
+            //Bitmap bmp = new Bitmap(Bitmap.FromFile(res.FileName)); //new Bitmap(image, new System.Drawing.Size(600, 337));            
             //emgu cv
             //List<System.Drawing.Rectangle> rects;
             //Image<Bgr, Byte> img = new Image<Bgr, byte>(bmp);
@@ -353,10 +352,53 @@ namespace CCTV_Accord
             //opencv3
             //OpenCvSharp.Rect[] rects=null;
             //bmp = FindPeople(bmp, out rects);
-
-            Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new ThreadStart(delegate
+            //call computer vision
+            bool isPeopleExist = false;
+            if (res.objects != null)
             {
-                
+                Debug.WriteLine($"object detected = {res.objects.Count}");
+
+                if (res.objects.Count > 0)
+                {
+                    
+
+                    //call computer vision
+
+                    //bmp.Save("Photos/" + BlobName);
+
+                    //var res = await ApiContainer.GetApi<ComputerVisionService>().RecognizeImage("Photos/" + BlobName);
+                    //res = res.ToLower();
+
+                    //bool PeopleExistx = false;
+                    var result = "";
+                    foreach (var item in res.objects)
+                    {
+                        if (item.Confidence > 0 && item.Label.Contains("person"))
+                        {
+                            isPeopleExist = true;
+                        }
+                        //if (item.Confidence>0.5 && item.Label.Contains("person"))
+                        //{
+                        //PeopleExistx = true;
+
+                        //MemoryStream ms = new MemoryStream();
+                        //bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
+
+                        //var IsUploaded = await BlobEngine.UploadFile(ms, BlobName);
+                        //string UrlImg = "https://storagemurahaje.blob.core.windows.net/cctv/" + BlobName;
+                        //if (IsUploaded)
+                        //{
+                        //    await PostToCloud(new CCTVData() { camName = CamName, description = res, imageUrl = UrlImg, tanggal = DateTime.Now });
+                        //}
+                        //}
+                        result += $"{item.Label} = {item.Confidence.ToString("n2")},";
+                    }
+
+                    Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new ThreadStart(delegate
+            {
+                var status = $"{CamName} - {DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")}: " + result;
+                TxtDetect.Document.Blocks.Add(new Paragraph(new Run(status)));
+
                 var img = new BitmapImage(new Uri(res.FileName));
                 switch (CamName)
                 {
@@ -376,58 +418,12 @@ namespace CCTV_Accord
                 
                 if (OldImages.ContainsKey(CamName))
                 {
-                    JunkFiles.Add(OldImages[CamName]);
+                    if(!isPeopleExist)
+                        JunkFiles.Add(OldImages[CamName]);
                     //File.Delete(OldImages[CamName]);
                 }
                 OldImages[CamName] = res.FileName;
             }));
-            //call computer vision
-            if (res.objects != null)
-            {
-                Debug.WriteLine($"object detected = {res.objects.Count}");
-                
-                if (res.objects.Count > 0)
-                {
-                    //call computer vision
-
-                    //bmp.Save("Photos/" + BlobName);
-
-                    //var res = await ApiContainer.GetApi<ComputerVisionService>().RecognizeImage("Photos/" + BlobName);
-                    //res = res.ToLower();
-                    
-                    //bool PeopleExistx = false;
-                    var result = "";
-                    foreach(var item in res.objects)
-                    {
-                        //if (item.Confidence>0.5 && item.Label.Contains("person"))
-                        //{
-                            //PeopleExistx = true;
-                            
-                            //MemoryStream ms = new MemoryStream();
-                            //bmp.Save(ms, System.Drawing.Imaging.ImageFormat.Jpeg);
-
-                            //var IsUploaded = await BlobEngine.UploadFile(ms, BlobName);
-                            //string UrlImg = "https://storagemurahaje.blob.core.windows.net/cctv/" + BlobName;
-                            //if (IsUploaded)
-                            //{
-                            //    await PostToCloud(new CCTVData() { camName = CamName, description = res, imageUrl = UrlImg, tanggal = DateTime.Now });
-                            //}
-                        //}
-                        result += $"{item.Label} = {item.Confidence.ToString("n2")},";
-                    }
-                    /*
-                    if (PeopleExistx)
-                    {
-                       
-                    }*/
-
-                    Application.Current.Dispatcher.Invoke(DispatcherPriority.Background, new ThreadStart(delegate
-                    {
-                        var status = $"{CamName} - {DateTime.Now.ToString("dd-MM-yyyy HH:mm:ss")}: " + result;
-                        TxtDetect.Document.Blocks.Add(new Paragraph(new Run(status)));
-                    }));
-
-
 
                     //File.Delete("Photos/"+BlobName);
                 }
