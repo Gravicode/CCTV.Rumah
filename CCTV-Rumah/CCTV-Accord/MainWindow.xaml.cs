@@ -43,7 +43,7 @@ namespace CCTV_Accord
         static EngineContainer ApiContainer = new EngineContainer();
         static HttpClient client = new HttpClient();
         static Dictionary<string, string> OldImages = new Dictionary<string, string>();
-        static List<string> JunkFiles = new List<string>();
+        //static List<string> JunkFiles = new List<string>();
         //static CascadeClassifier _localObjectDetector = new CascadeClassifier("Data/haarcascade_frontalface_alt2.xml");
 
         //head
@@ -87,18 +87,12 @@ namespace CCTV_Accord
             ChkGuard.Checked +=(a,b) => { IsGuardMode = ChkGuard.IsChecked.Value; };
             APPCONTANTS.CameraCount = int.Parse(ConfigurationManager.AppSettings["CameraCount"]);
             APPCONTANTS.CaptureTimeInterval = int.Parse(ConfigurationManager.AppSettings["CaptureTimeInterval"]);
+            CleanTempBtn.Click += (a, b) => { LocalStorage.CleanTempFolder(); };
             //_localObjectDetector.Load("Data/haarcascade_frontalface_alt2.xml");
             //_localObjectDetector.Load("Data/haarcascade_upperbody.xml");
+            
             this.Closed +=(e,w)=>{
-                try
-                {
-                    foreach (var item in JunkFiles)
-                    {
-                        if (File.Exists(item))
-                            File.Delete(item);
-                    }
-                }
-                catch { }
+                LocalStorage.CleanTempFolder();
             };
 
         }
@@ -200,7 +194,7 @@ namespace CCTV_Accord
                         }*/
 
                         //Bitmap frame = reader[i].ReadVideoFrame((int)reader[i].FrameCount);
-                        var tempFile = System.IO.Path.GetTempFileName() + $"_cam{i}.jpg";
+                        var tempFile = LocalStorage.GetTempFileName() + $"_cam{i}.jpg";
                         reader[i].TakeSnapshot(new FileInfo(tempFile));
                         if(File.Exists(tempFile))
                             await ProcessFrame(tempFile, $"cam{i + 1}");
@@ -424,13 +418,13 @@ namespace CCTV_Accord
                             Cam4.Source = img;//BitmapToImageSource(bmp);
                         break;
                     }
-
+                    /*
                     if (OldImages.ContainsKey(CamName))
                     {
                         if (!isPeopleExist)
                             JunkFiles.Add(OldImages[CamName]);
-                    //File.Delete(OldImages[CamName]);
-                }
+                        //File.Delete(OldImages[CamName]);
+                    }*/
                     OldImages[CamName] = res.FileName;
                 }));
             }

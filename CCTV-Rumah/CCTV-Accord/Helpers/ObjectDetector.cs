@@ -32,7 +32,7 @@ namespace CCTV_Accord.Helpers
                 {
                     // Load Data
                     //IEnumerable<ImageNetData> images = ImageNetData.ReadFromFile(imagesFolder);
-                    //var tempFile = Path.GetTempFileName() + $"_{CamName}.jpg";
+                    //var tempFile = LocalStorage.GetTempFileName() + $"_{CamName}.jpg";
                     //image.Save(tempFile);
 
                     IEnumerable<ImageNetData> images = new List<ImageNetData> { new ImageNetData() { ImagePath = ImageFileInput, Label = Path.GetFileName(ImageFileInput) } };
@@ -148,7 +148,7 @@ namespace CCTV_Accord.Helpers
                     break;
                 }
             }
-            var OutputName = PeopleExist && MainWindow.IsGuardMode? System.IO.Path.Combine(ObjectDetector.outputFolder, $"{DateTime.Now.ToString("yyyyMMdd_HHmmss")}_{CamName}.jpg"):Path.GetTempFileName()+".jpg";
+            var OutputName = PeopleExist && MainWindow.IsGuardMode? System.IO.Path.Combine(ObjectDetector.outputFolder, $"{DateTime.Now.ToString("yyyyMMdd_HHmmss")}_{CamName}.jpg"):LocalStorage.GetTempFileName()+".jpg";
             
             image.Save(OutputName);
             image.Dispose();

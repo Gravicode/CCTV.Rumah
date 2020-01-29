@@ -131,6 +131,9 @@
     <Reference Include="OpenCvSharp.UserInterface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=6adad1e807fea099, processorArchitecture=MSIL">
       <HintPath>..\packages\OpenCvSharp3-AnyCPU.4.0.0.20181129\lib\net461\OpenCvSharp.UserInterface.dll</HintPath>
     </Reference>
+    <Reference Include="shortid, Version=2.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <HintPath>..\packages\shortid.2.0.0\lib\net45\shortid.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.AppContext, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL">
       <HintPath>..\packages\System.AppContext.4.3.0\lib\net46\System.AppContext.dll</HintPath>
@@ -286,6 +289,7 @@
     <Compile Include="DataStructures\ImageNetPrediction.cs" />
     <Compile Include="Helpers\AzureBlobHelper.cs" />
     <Compile Include="Helpers\ComputerVisionService.cs" />
+    <Compile Include="Helpers\LocalStorage.cs" />
     <Compile Include="Helpers\OnnxModelScorer.cs" />
     <Compile Include="YoloParser\DimensionsBase.cs" />
     <Compile Include="YoloParser\YoloBoundingBox.cs" />
