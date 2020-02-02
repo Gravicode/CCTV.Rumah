@@ -43,6 +43,7 @@ namespace CCTV_Accord
         static EngineContainer ApiContainer = new EngineContainer();
         static HttpClient client = new HttpClient();
         static Dictionary<string, string> OldImages = new Dictionary<string, string>();
+        static Timer CleanerTimer;
         //static List<string> JunkFiles = new List<string>();
         //static CascadeClassifier _localObjectDetector = new CascadeClassifier("Data/haarcascade_frontalface_alt2.xml");
 
@@ -62,7 +63,7 @@ namespace CCTV_Accord
 
         static Dictionary<string, string> FrameId = new Dictionary<string, string>();
         #endregion
-
+        static bool IsCleaning = false;
         #region Forms
         public MainWindow()
         {
@@ -77,7 +78,15 @@ namespace CCTV_Accord
             //frame for analysis
 
             //_frameHandler[i].SetInterval(new TimeSpan(int.Parse(DurationParams[0]), int.Parse(DurationParams[1]), int.Parse(DurationParams[2])));
-
+             CleanerTimer =  new Timer((a)=> {
+                 if (!IsCleaning)
+                 {
+                     IsCleaning = true;
+                     LocalStorage.CleanTempFolder();
+                     IsCleaning = false;
+                 }
+             },null,new TimeSpan(0,0,0), new TimeSpan(int.Parse(DurationParams[0]), int.Parse(DurationParams[1]), int.Parse(DurationParams[2])));
+            
             //ApiContainer.Register<ComputerVisionService>(new ComputerVisionService());
             ApiContainer.Register<ObjectDetector>(new ObjectDetector());
 
@@ -87,7 +96,18 @@ namespace CCTV_Accord
             ChkGuard.Checked +=(a,b) => { IsGuardMode = ChkGuard.IsChecked.Value; };
             APPCONTANTS.CameraCount = int.Parse(ConfigurationManager.AppSettings["CameraCount"]);
             APPCONTANTS.CaptureTimeInterval = int.Parse(ConfigurationManager.AppSettings["CaptureTimeInterval"]);
-            CleanTempBtn.Click += (a, b) => { LocalStorage.CleanTempFolder(); };
+            CleanTempBtn.Click += (a, b) => {
+                if (IsCleaning)
+                {
+                    MessageBox.Show("Cleaning is in progress.");
+                }
+                else
+                {
+                    IsCleaning = true;
+                    LocalStorage.CleanTempFolder();
+                    IsCleaning = false;
+                }
+            };
             //_localObjectDetector.Load("Data/haarcascade_frontalface_alt2.xml");
             //_localObjectDetector.Load("Data/haarcascade_upperbody.xml");
             
